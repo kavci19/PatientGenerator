@@ -4,16 +4,30 @@ from datetime import datetime, date, timedelta
 import random
 import pytz
 from nanoid import generate
+from dosageEvent import DosageEvent
+from suppFunctions import generateNDC
+
 
 # start and end date of treatment plan - dates are passed as datetime objects, ie date(2008, 8, 15)
-# expectedTimes is an array of times that the medicine should be administered in a given day, in minutes
-# adherenceRate is a decimal between 0 and 1 (ie 50% adherenceRate is passed as 0.5)
-# distance is the range of how close the patient could take the medicine compared to the expected time; i.e. distance of 20 means medicine is taken 20 minutes within expected time
-
+# dosageEvents is an array of DosageEvent objects. A DosageEvent object contains to properties expectedTime (in mins), adherence (decimal between 0 and 1), and distance (range of how close
+# the patient could take the medicine compared to the expected time)
+# weeklyAdherence is an array of 7 numbers (corresponding to each day of the week) that adjusts base adherence by a given percentage. index 0 is Monday
+# adherenceTrend is a function that takes in the day as a parameter and outputs daily adherence based on growth
 # returns two outputs: a dataframe and a json structure
 
-def generatePatient(startAt, endAt, expectedTimes, adherenceRate, distance, ndcNumber):
+
+def generatePatient(
+        startAt=date(2020, 1, 1),
+        endAt=date(2020, 2, 1),
+        ndcNumber=generateNDC(),
+        patientId=generate(size=28),
+        caregiverId=generate(size=28),
+        weeklyAdherence=[0] * 7,
+        dosageEvents=[DosageEvent(480, 0.5, 60)],
+        adherenceTrend=None):
+
     # generate all dates in given interval
+
     days = []
     delta = endAt - startAt
 
@@ -26,39 +40,53 @@ def generatePatient(startAt, endAt, expectedTimes, adherenceRate, distance, ndcN
     profile = []
     tz = pytz.timezone("US/Eastern")
     packageId = generate(size=28)
-
-    expectedTimes.sort()  # unnecessary if input array is always sorted
+    dayIndex = 1
 
     for day in days:
-        for hour in expectedTimes:
-            expectedAt = datetime(day.year, day.month, day.day, int(hour / 60), int(hour % 60))
-            timeDiff = random.randint(-distance, distance)
+        for dosageEvent in dosageEvents:
+            expectedAt = datetime(
+                day.year,
+                day.month,
+                day.day,
+                int(dosageEvent.expectedTime / 60),
+                int(dosageEvent.expectedTime % 60))
+
+            timeDiff = random.randint(-dosageEvent.distance, dosageEvent.distance)
             actualAt = expectedAt - timedelta(minutes=timeDiff)
+
+
+
+            #modify adherence based on day of the week and adherenceTrend
+            dayOfWeek = expectedAt.weekday()
+            adherenceToday = dosageEvent.adherence * (1 + weeklyAdherence[dayOfWeek % 7])
+            if adherenceTrend is not None:
+               adherenceToday = adherenceTrend(dayIndex)
+
+
+
+
+            # if adherenceToday or 1-adherenceToday becomes negative, need to avoid negative probability
+            if adherenceToday > 1:
+                adherenceToday = 1
+            if adherenceToday < 0:
+                adherenceToday = 0
 
             dose = {
                 "id": generate(size=28),
                 "packageId": packageId,
                 "ndcNumber": ndcNumber,
+                "patientId": patientId,
+                "caregiverId": caregiverId,
                 "expectedAt": (tz.localize(expectedAt)).isoformat(),
                 "takenAt": np.random.choice(
                     a=[str((tz.localize(actualAt)).isoformat()), None],
                     size=1,
                     replace=False,
-                    p=[adherenceRate, 1 - adherenceRate]
+                    p=[adherenceToday, 1 - adherenceToday]
                 )[0]
             }
             profile.append(dose)
 
+        dayIndex += 1
+
     return pd.DataFrame(profile), pd.DataFrame(profile).to_json(orient="records")
-
-
-# sample usage
-def main():
-    df, json = generatePatient(date(2020, 1, 15), date(2020, 1, 20), [420, 1080], 0.6, 20, "0071-0155-10")
-    print(df)
-    print()
-    print(json)
-
-
-if __name__ == "__main__":
-    main()
