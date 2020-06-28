@@ -15,19 +15,17 @@ from suppFunctions import generateNDC
 # adherenceTrend is a function that takes in the day as a parameter and outputs daily adherence based on growth
 # returns two outputs: a dataframe and a json structure
 
-
 def generatePatient(
+        patientId=generate(size=28),
+        caregiverId=generate(size=28),
         startAt=date(2020, 1, 1),
         endAt=date(2020, 2, 1),
         ndcNumber=generateNDC(),
-        patientId=generate(size=28),
-        caregiverId=generate(size=28),
-        weeklyAdherence=[0] * 7,
         dosageEvents=[DosageEvent(480, 0.5, 60)],
+        weeklyAdherence=[0] * 7,
         adherenceTrend=None):
 
     # generate all dates in given interval
-
     days = []
     delta = endAt - startAt
 
@@ -36,7 +34,6 @@ def generatePatient(
         days.append(day)
 
     # create a dictionary for each dosage and append to patient's profile
-
     profile = []
     tz = pytz.timezone("US/Eastern")
     packageId = generate(size=28)
@@ -54,16 +51,11 @@ def generatePatient(
             timeDiff = random.randint(-dosageEvent.distance, dosageEvent.distance)
             actualAt = expectedAt - timedelta(minutes=timeDiff)
 
-
-
-            #modify adherence based on day of the week and adherenceTrend
+            # modify adherence based on day of the week and adherenceTrend
             dayOfWeek = expectedAt.weekday()
             adherenceToday = dosageEvent.adherence * (1 + weeklyAdherence[dayOfWeek % 7])
             if adherenceTrend is not None:
                adherenceToday = adherenceTrend(dayIndex)
-
-
-
 
             # if adherenceToday or 1-adherenceToday becomes negative, need to avoid negative probability
             if adherenceToday > 1:

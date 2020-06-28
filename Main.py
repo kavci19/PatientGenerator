@@ -1,25 +1,29 @@
 from datetime import date
 from dosageEvent import DosageEvent
 from suppFunctions import linearGrowth
-from PatientGenerator import generatePatient
+from patientGenerator import generatePatient
 
-
-#sample usage
+# sample usage
 
 def main():
-    dosage1 = DosageEvent(420, 0.5, 20)
-    dosage2 = DosageEvent(1080, 0.5, 20)
-
     df, json = generatePatient(
-        date(2020, 1, 15),
-        date(2020, 1, 20),
-        "0101-0155-10",
-        "0061-0155-10",
-        "0071-0155-10",
-        [0, 0.25, 0.25, 0.5, 0.25, -0.5, -0.5],
-        [dosage1, dosage2],
-        linearGrowth)
-
+        # 5 days
+        startAt=date(2020, 1, 15),
+        endAt=date(2020, 1, 19),
+        # a drug
+        ndcNumber="0101-0155-10",
+        # morning and evening dose
+        dosageEvents=[
+            # 7 AM, 75% adherence, within 20 minutes
+            DosageEvent(420, 0.75, 20),
+            # 6 PM, 50% adherence, within 60 minutes
+            DosageEvent(1080, 0.5, 20)
+        ],
+        # adherence that is above average during the week
+        # and below average on the weekend
+        weeklyAdherence=[0, 0.25, 0.25, 0.5, 0.25, -0.5, -0.5],
+        # adherence improving daily
+        adherenceTrend=linearGrowth)
 
     print(df)
     print()
