@@ -83,6 +83,7 @@ def generatePatient(
                 "expectedAt": (tz.localize(expectedAt)).isoformat(),
                 "takenAt": (tz.localize(takenAt)).isoformat() if takenAt else None
 
+
             }
             profile.append(dose)
 

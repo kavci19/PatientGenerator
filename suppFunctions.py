@@ -6,7 +6,6 @@ from datetime import date
 import matplotlib.ticker as plticker
 
 
-
 def generateNDC():
     dash = '-'
     id1 = generate('1234567890', 4)
@@ -22,51 +21,65 @@ def linearGrowth(day=1):
 
 # adherence grows more slowly per week
 def logGrowth(day=1):
-    return 1 + 0.5 * np.log10(day / 7)
+    return 1 + 0.8 * np.log10(day / 7)
 
 
 # plots the expected time of dosage vs actual time of dosage over treatment plan
-def plotAdherence(days, expectedTimes, actualTimes):
+def plotAdherence(days, expectedTimes, actualTimes, originalTimes, ticks):
     ax = plt.gca()
 
-    plt.scatter(days, expectedTimes, alpha=0.5, c='red', label='Expected')
+    plt.scatter(days, expectedTimes, alpha=0.5, c='grey', label='Expected', s=10)
     plt.scatter(days, actualTimes, alpha=0.5, c='blue', label='Actual')
+    plt.scatter([], [], alpha = 0.5, c='red', label = 'Missed', marker='X')
+
+    # plot missed dosages as X
+    for i in range(len(actualTimes)):
+        if actualTimes[i] is None:
+            hours = originalTimes[i].hour * 60 + originalTimes[i].minute
+            ax.plot(days[i], hours, marker='x', linestyle='', ms=8, c='red')
+
     plt.legend()
     plt.title('Expected vs Actual Doses Over Time')
     plt.xlabel('Date')
     plt.ylabel('Hour')
     ax.tick_params(axis='x', which='major', labelsize=8)
     plt.gcf().autofmt_xdate()
-    loc = plticker.MultipleLocator(base=3.0)
-    ax.xaxis.set_major_locator(loc)
-
+    ax.xaxis.set_major_locator(ticks)
     ax.set_ylim([0, 1440])
-
     plt.yticks(ticks=[120, 240, 360, 480, 600, 720, 840, 960, 1080, 1200, 1320, 1440])
     labels = ['2:00', '4:00', '6:00', '8:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '24:00']
     ax.set_yticklabels(labels)
 
     plt.show()
 
+# determine the frequency of x ticks in a given time range
+def calculateXTicks(startAt, endAt):
+    delta = (endAt - startAt).days
 
-# extracts coordinates from dataframe object for plotting
-def generateHours(df):
+    x = int(delta/10)
+
+    ticks = plticker.MultipleLocator(base=x)
+
+    return ticks
+
+# extract coordinates from dataframe object for plotting
+def generateCoordinates(df):
     dates = []
     actualTimes = []
     expectedTimes = []
+    originalTimes = [dateutil.parser.parse(i) for i in df['expectedAt'].to_list()]
 
-    for i in df['takenAt'].to_list():
-        if i:
-            aDT = dateutil.parser.parse(i)
-            a = aDT.hour * 60 + aDT.minute
-
+    for i in range(len(df['expectedAt'].to_list())):
+        # if dose was missed, delete the dose from actual and expected lists and let the originalTimes plot it
+        if df['takenAt'].to_list()[i] is None:
+            actualTimes.append(None)
+            expectedTimes.append(None)
         else:
-            a = None
-        actualTimes.append(a)
+            aDT = dateutil.parser.parse(df['takenAt'].to_list()[i])
+            actualTimes.append(aDT.hour * 60 + aDT.minute)
+            eDT = dateutil.parser.parse(df['expectedAt'].to_list()[i])
+            expectedTimes.append(eDT.hour * 60 + eDT.minute)
+        ndate = originalTimes[i]
+        dates.append(date(ndate.year, ndate.month, ndate.day))
 
-    for i in df['expectedAt'].to_list():
-        eDT = dateutil.parser.parse(i)
-        dates.append(date(eDT.year, eDT.month, eDT.day))
-        expectedTimes.append(eDT.hour * 60 + eDT.minute)
-
-    return expectedTimes, actualTimes, dates
+    return expectedTimes, actualTimes, dates, originalTimes
