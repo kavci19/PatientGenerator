@@ -14,7 +14,8 @@ from suppFunctions import generateNDC
 # (expected time of administering, in mins), adherence (decimal between 0 and 1), and distance (range of how close
 # the patient could take the medicine compared to the expected time)
 
-# weeklyAdherence is an array of 7 numbers (corresponding to each day of the week) that adjusts base adherence by a given percentage; index 0 is Monday
+# weeklyAdherence is an array of 7 numbers (corresponding to each day of the week) that adjusts base adherence by a
+# given percentage; index 0 is Monday
 
 # adherenceTrend is a function that takes in the day as a parameter and adjusts daily adherence
 
@@ -43,7 +44,14 @@ def generatePatient(
     packageId = generate(size=28)
     dayIndex = 1
 
+    # track each interval to append actual adherence rates
+    startInterval = 0
+    numDoses = 0
+    takenDoses = 0
+    missedDoses = 0
+
     for day in days:
+
         for dosageEvent in dosageEvents:
             expectedAt = datetime(
                 day.year,
@@ -74,6 +82,11 @@ def generatePatient(
                 p=[adherenceToday, 1 - adherenceToday]
             )[0]
 
+            if takenAt is None:
+                missedDoses += 1
+            else:
+                takenDoses += 1
+
             dose = {
                 "id": generate(size=28),
                 "packageId": packageId,
@@ -81,12 +94,17 @@ def generatePatient(
                 "patientId": patientId,
                 "caregiverId": caregiverId,
                 "expectedAt": (tz.localize(expectedAt)).isoformat(),
-                "takenAt": (tz.localize(takenAt)).isoformat() if takenAt else None
-
+                "takenAt": (tz.localize(takenAt)).isoformat() if takenAt else None,
 
             }
             profile.append(dose)
+            numDoses += 1
+        # calculate cumulative average for adherence and append to dictionary
+        actualAdherence = takenDoses / (missedDoses + takenDoses)
+        for i in range(len(dosageEvents)):
+            profile[startInterval + i]['adherence'] = actualAdherence
 
+        startInterval += len(dosageEvents)
         dayIndex += 1
 
     return pd.DataFrame(profile), pd.DataFrame(profile).to_json(orient="records")
