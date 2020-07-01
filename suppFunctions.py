@@ -125,7 +125,7 @@ def createCaption(dosageEvents, adjustmentsList):
             ampm = 'AM'
 
         output += 'Dose ' + str(num) + ' at ' + str(hour) + ampm + ' +/- ' + str(dose.distance) + ' minutes @ ' + str(
-            dose.adherence) + ' base adherence' + '\n' + '\n'
+            dose.adherence*100) + ' % base adherence' + '\n' + '\n'
 
 
         if (ct%4 == 0):
