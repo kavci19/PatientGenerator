@@ -1,0 +1,3 @@
+To Do:
+
+- area of style visualization on graph for adherenceLevel over time
