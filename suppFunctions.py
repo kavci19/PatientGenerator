@@ -5,7 +5,7 @@ import dateutil.parser
 from datetime import date
 import matplotlib.ticker as plticker
 
-size = 12
+size = 6
 
 def generateNDC():
     dash = '-'
