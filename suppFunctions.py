@@ -21,8 +21,10 @@ def linearGrowth(day=1):
 
 
 # adherence grows more slowly per week
-def logGrowth(day=1):
-    return 1 + 2 * np.log10(day / 7)
+def logGrowth(day=1, a = 0.2):
+    if a is None:
+        a=0.2
+    return a * np.log10(float(day / 7))
 
 
 # plots the expected time of dosage vs actual time of dosage over treatment plan
@@ -70,7 +72,7 @@ def plotAdherence(days, expectedTimes, actualTimes, originalTimes, ticks, adhere
 def calculateXTicks(startAt, endAt):
     delta = (endAt - startAt).days
 
-    x = int(delta / 10)
+    x = int(delta / 12)
 
     ticks = plticker.MultipleLocator(base=x)
 

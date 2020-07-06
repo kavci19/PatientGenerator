@@ -27,7 +27,8 @@ def main():
         # and below average on the weekend,
         weeklyAdherence=[0.25, 0.25, 0.25, 0.25, 0.25, -0.25, 0.25],
         # adherence improving each week, more slowly over time
-        adherenceTrend=logGrowth)
+        adherenceTrend=logGrowth,
+        adherenceCoeff=0.4)
 
 
     expectedTimes, actualTimes, dates, originalTimes = generateCoordinates(df)

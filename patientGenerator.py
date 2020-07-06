@@ -29,7 +29,8 @@ def generatePatient(
         ndcNumber=generateNDC(),
         dosageEvents=[DosageEvent(480, 0.5, 60)],
         weeklyAdherence=[0] * 7,
-        adherenceTrend=None):
+        adherenceTrend=None,
+        adherenceCoeff=None):
     # generate all dates in given interval
     days = []
     delta = endAt - startAt
@@ -67,7 +68,7 @@ def generatePatient(
             dayOfWeek = expectedAt.weekday()
             adherenceToday = dosageEvent.adherence * (1 + weeklyAdherence[dayOfWeek])
             if adherenceTrend is not None:
-                adherenceToday = adherenceToday * adherenceTrend(dayIndex)
+                adherenceToday = adherenceToday + adherenceTrend(dayIndex, adherenceCoeff)
 
             # if adherenceToday or 1-adherenceToday becomes negative, need to avoid negative probability
             if adherenceToday > 1:
