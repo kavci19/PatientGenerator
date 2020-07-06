@@ -20,12 +20,12 @@ def main():
             # 7 AM, 40% adherence, within 100 minutes
             DosageEvent(420, 0.2, 100),
 
-            # 6 PM, 50% adherence, within 60 minutes
+            # 6 PM, 20% adherence, within 60 minutes
             DosageEvent(1080, 0.2, 60)
         ],
         # adherence that is above average during the week
         # and below average on the weekend,
-        weeklyAdherence=[0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+        weeklyAdherence=[0.25, 0.25, 0.25, 0.25, 0.25, -0.25, 0.25],
         # adherence improving each week, more slowly over time
         adherenceTrend=logGrowth)
 
